@@ -5,6 +5,7 @@ import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSearchClient } from "./search.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
+import { DailyReportClient } from "./daily.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -20,6 +21,7 @@ class TwitterManager {
     search: TwitterSearchClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
+    daily?: DailyReportClient;
 
     constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
         // Pass twitterConfig to the base client
@@ -36,6 +38,11 @@ class TwitterManager {
             elizaLogger.warn("3. can get your account banned");
             elizaLogger.warn("use at your own risk");
             this.search = new TwitterSearchClient(this.client, runtime);
+        }
+
+        // 添加日报客户端
+        if (twitterConfig.DAILY_REPORT_ENABLE) {
+            this.daily = new DailyReportClient(this.client, runtime);
         }
 
         // Mentions and interactions
@@ -67,6 +74,9 @@ export const TwitterClientInterface: Client = {
 
         // Start the posting loop
         await manager.post.start();
+
+        // Start the daily report
+        await manager.daily.start();
 
         // Start the search logic if it exists
         if (manager.search) {
